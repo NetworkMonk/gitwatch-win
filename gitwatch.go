@@ -1,9 +1,14 @@
 package main
 
 import (
+	"log"
 	"math/rand"
+	"os"
+	"strings"
 	"time"
 
+	"github.com/NetworkMonk/gitwatch/config"
+	"github.com/NetworkMonk/gitwatch/watch"
 	"github.com/NetworkMonk/service"
 )
 
@@ -17,5 +22,19 @@ func main() {
 }
 
 func execute() {
+	// Get the current exe path
+	exePath, err := os.Executable()
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	// Load configuration
+	configPath := strings.Replace(exePath, "gitwatch.exe", "", 1) + "gitwatch.json"
+	configuration, configErr := config.Load(configPath)
+	if configErr != nil {
+		log.Fatal(configErr)
+	}
+
+	// Start the watch process
+	watch.Start(configuration)
 }

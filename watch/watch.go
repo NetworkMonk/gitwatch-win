@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"os/exec"
+	"regexp"
 	"time"
 
 	"github.com/NetworkMonk/gitwatch/config"
@@ -71,7 +72,25 @@ func pull(entry *config.Entry) error {
 	if pullErr != nil {
 		return errors.New("Failed to perform pull on folder")
 	}
-	log.Printf("git pull: %s", out)
+	log.Printf("%s", out)
+
+	// Lets check to see if an update has been detected
+	match, matchErr := regexp.Match(`^Updating\s`, out)
+	if matchErr != nil {
+		log.Printf("Failed to check regular expression")
+	} else if match == true {
+		log.Printf("Update detected")
+		// Update has been detected, loop through each action command in sequence
+		for _, action := range entry.Action {
+			cmdAction := exec.Command(action.Command, action.Args...)
+			cmdAction.Dir = entry.Path
+			actionErr := cmdAction.Run()
+			if actionErr != nil {
+				log.Printf("Action Error: %s", actionErr)
+				break
+			}
+		}
+	}
 
 	return nil
 }
